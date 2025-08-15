@@ -138,7 +138,7 @@ router.post('/calculate', [
       success: true,
       message: 'Troco calculado com sucesso',
       change,
-      formattedChange: `R$ ${change.toFixed(2).replace('.', ',')`,
+      formattedChange: `R$ ${change.toFixed(2).replace('.', ',')}`,
       canProcessPix: true,
       subAccount: {
         balance: subAccount.balance,
