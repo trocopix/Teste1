@@ -1,7 +1,3 @@
 {
-  "functions": {
-    "api/process-pix.js": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  "version": 2
 }
