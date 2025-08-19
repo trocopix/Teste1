@@ -2,7 +2,7 @@ const https = require('https');
 const fs = require('fs');
 
 // Vercel serverless function with mTLS support for EFI Bank
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
