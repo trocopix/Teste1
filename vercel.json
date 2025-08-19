@@ -3,13 +3,5 @@
     "api/process-pix.js": {
       "runtime": "nodejs18.x"
     }
-  },
-  "env": {
-    "EFI_BANK_CLIENT_ID": "@efi_bank_client_id",
-    "EFI_BANK_CLIENT_SECRET": "@efi_bank_client_secret", 
-    "EFI_CERT": "@efi_cert",
-    "EFI_KEY": "@efi_key",
-    "EFI_CA_CERT": "@efi_ca_cert",
-    "VERCEL_API_SECRET": "@vercel_api_secret"
   }
 }
