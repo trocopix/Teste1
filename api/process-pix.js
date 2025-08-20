@@ -234,4 +234,4 @@ async function createPixTransaction(token, { establishment_id, changeAmount, pix
     req.write(postData);
     req.end();
   });
-}
+}//
