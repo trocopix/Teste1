@@ -36,10 +36,11 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Debug: checar variáveis de certificado antes de qualquer requisição
-    peek('EFI_CERT', process.env.EFI_CERT);
-    peek('EFI_KEY', process.env.EFI_KEY);
-    peek('EFI_CA_CERT', process.env.EFI_CA_CERT);
+    // Estas checagens aqui são úteis para depurar a função principal, mas o erro do certificado
+    // acontecerá dentro das funções, por isso as repetimos lá.
+    // peek('EFI_CERT', process.env.EFI_CERT);
+    // peek('EFI_KEY', process.env.EFI_KEY);
+    // peek('EFI_CA_CERT', process.env.EFI_CA_CERT);
 
     const { establishment_id, changeAmount, pixKey } = req.body;
 
@@ -94,6 +95,13 @@ async function getEFIToken() {
     const postData = JSON.stringify({
       grant_type: 'client_credentials'
     });
+
+    // Adicionado: Chamadas de debug antes de criar o agente mTLS
+    console.log('\n--- Verificando certificados para o token ---');
+    peek('EFI_CERT', process.env.EFI_CERT);
+    peek('EFI_KEY', process.env.EFI_KEY);
+    peek('EFI_CA_CERT', process.env.EFI_CA_CERT);
+    console.log('--------------------------------------------\n');
 
     // Create mTLS agent with certificates
     const agent = new https.Agent({
@@ -167,6 +175,13 @@ async function createPixTransaction(token, { establishment_id, changeAmount, pix
     };
 
     const postData = JSON.stringify(transactionData);
+
+    // Adicionado: Chamadas de debug antes de criar o agente mTLS
+    console.log('\n--- Verificando certificados para o PIX ---');
+    peek('EFI_CERT', process.env.EFI_CERT);
+    peek('EFI_KEY', process.env.EFI_KEY);
+    peek('EFI_CA_CERT', process.env.EFI_CA_CERT);
+    console.log('-------------------------------------------\n');
 
     const agent = new https.Agent({
       cert: process.env.EFI_CERT,
