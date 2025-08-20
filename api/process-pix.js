@@ -1,5 +1,17 @@
 const https = require('https');
-const fs = require('fs');
+
+// Função de debug para checar PEMs
+function peek(name, val) {
+  if (!val) {
+    console.error(`[ERRO] Variável ${name} está vazia ou não foi definida`);
+    return;
+  }
+  const preview = val.slice(0, 60).replace(/\n/g, '\\n');
+  console.log(`[DEBUG] ${name} começa com: ${preview}`);
+  if (!val.includes('-----BEGIN')) {
+    console.error(`[ERRO] ${name} não contém "-----BEGIN" → PEM inválido`);
+  }
+}
 
 // Vercel serverless function with mTLS support for EFI Bank
 module.exports = async function handler(req, res) {
@@ -24,6 +36,11 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Debug: checar variáveis de certificado antes de qualquer requisição
+    peek('EFI_CERT', process.env.EFI_CERT);
+    peek('EFI_KEY', process.env.EFI_KEY);
+    peek('EFI_CA_CERT', process.env.EFI_CA_CERT);
+
     const { establishment_id, changeAmount, pixKey } = req.body;
 
     if (!establishment_id || !changeAmount || !pixKey) {
@@ -80,9 +97,9 @@ async function getEFIToken() {
 
     // Create mTLS agent with certificates
     const agent = new https.Agent({
-      cert: process.env.EFI_CERT, // PEM certificate content
-      key: process.env.EFI_KEY,   // PEM private key content
-      ca: process.env.EFI_CA_CERT, // CA certificate content
+      cert: process.env.EFI_CERT,
+      key: process.env.EFI_KEY,
+      ca: process.env.EFI_CA_CERT,
       rejectUnauthorized: true
     });
 
@@ -151,7 +168,6 @@ async function createPixTransaction(token, { establishment_id, changeAmount, pix
 
     const postData = JSON.stringify(transactionData);
 
-    // Create mTLS agent with certificates
     const agent = new https.Agent({
       cert: process.env.EFI_CERT,
       key: process.env.EFI_KEY,
