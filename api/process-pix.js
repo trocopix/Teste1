@@ -128,12 +128,23 @@ async function getEFIToken() {
       grant_type: 'client_credentials'
     });
 
-    // Create mTLS agent with certificates (with proper PEM normalization)
+    // Debug certificate loading
+    const cert = normalizePem(process.env.EFI_CERT, 'CERTIFICATE');
+    const key = normalizePem(process.env.EFI_KEY, 'PRIVATE KEY');
+    const ca = normalizeCA(process.env.EFI_CA_CERT);
+    
+    console.log('Certificate loaded:', cert ? 'YES' : 'NO');
+    console.log('Key loaded:', key ? 'YES' : 'NO');
+    console.log('CA loaded:', ca ? 'YES' : 'NO');
+
+    // Create mTLS agent with certificates
     const agent = new https.Agent({
-      cert: normalizePem(process.env.EFI_CERT, 'CERTIFICATE'),
-      key: normalizePem(process.env.EFI_KEY, 'PRIVATE KEY'),
-      ca: normalizeCA(process.env.EFI_CA_CERT),
-      rejectUnauthorized: true
+      cert: cert,
+      key: key,
+      ca: ca,
+      rejectUnauthorized: true,
+      // Add debug options
+      secureProtocol: 'TLSv1_2_method'
     });
 
     const options = {
@@ -150,6 +161,9 @@ async function getEFIToken() {
     };
 
     const req = https.request(options, (res) => {
+      console.log('Response status:', res.statusCode);
+      console.log('Response headers:', res.headers);
+      
       let data = '';
       
       res.on('data', (chunk) => {
@@ -157,6 +171,7 @@ async function getEFIToken() {
       });
       
       res.on('end', () => {
+        console.log('Response data:', data);
         try {
           const response = JSON.parse(data);
           if (res.statusCode === 200 && response.access_token) {
@@ -174,7 +189,40 @@ async function getEFIToken() {
 
     req.on('error', (error) => {
       console.error('Token request error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        errno: error.errno,
+        syscall: error.syscall,
+        hostname: error.hostname
+      });
       reject(new Error(`Token request failed: ${error.message}`));
+    });
+
+    req.on('socket', (socket) => {
+      console.log('Socket created');
+      
+      socket.on('connect', () => {
+        console.log('Socket connected');
+      });
+      
+      socket.on('secureConnect', () => {
+        console.log('TLS handshake successful');
+        console.log('TLS version:', socket.getProtocol());
+        console.log('Authorized:', socket.authorized);
+        if (!socket.authorized) {
+          console.log('Authorization error:', socket.authorizationError);
+        }
+      });
+      
+      socket.on('error', (err) => {
+        console.error('Socket error:', err);
+      });
+      
+      socket.on('close', () => {
+        console.log('Socket closed');
+      });
     });
 
     req.write(postData);
