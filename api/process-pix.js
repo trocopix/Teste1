@@ -1,17 +1,5 @@
 const https = require('https');
-
-// Função de debug para checar PEMs
-function peek(name, val) {
-  if (!val) {
-    console.error(`[ERRO] Variável ${name} está vazia ou não foi definida`);
-    return;
-  }
-  const preview = val.slice(0, 60).replace(/\n/g, '\\n');
-  console.log(`[DEBUG] ${name} começa com: ${preview}`);
-  if (!val.includes('-----BEGIN')) {
-    console.error(`[ERRO] ${name} não contém "-----BEGIN" → PEM inválido`);
-  }
-}
+const fs = require('fs');
 
 // Vercel serverless function with mTLS support for EFI Bank
 module.exports = async function handler(req, res) {
@@ -36,12 +24,6 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Estas checagens aqui são úteis para depurar a função principal, mas o erro do certificado
-    // acontecerá dentro das funções, por isso as repetimos lá.
-    // peek('EFI_CERT', process.env.EFI_CERT);
-    // peek('EFI_KEY', process.env.EFI_KEY);
-    // peek('EFI_CA_CERT', process.env.EFI_CA_CERT);
-
     const { establishment_id, changeAmount, pixKey } = req.body;
 
     if (!establishment_id || !changeAmount || !pixKey) {
@@ -96,18 +78,11 @@ async function getEFIToken() {
       grant_type: 'client_credentials'
     });
 
-    // Adicionado: Chamadas de debug antes de criar o agente mTLS
-    console.log('\n--- Verificando certificados para o token ---');
-    peek('EFI_CERT', process.env.EFI_CERT);
-    peek('EFI_KEY', process.env.EFI_KEY);
-    peek('EFI_CA_CERT', process.env.EFI_CA_CERT);
-    console.log('--------------------------------------------\n');
-
     // Create mTLS agent with certificates
     const agent = new https.Agent({
-      cert: process.env.EFI_CERT,
-      key: process.env.EFI_KEY,
-      ca: process.env.EFI_CA_CERT,
+      cert: process.env.EFI_CERT, // PEM certificate content
+      key: process.env.EFI_KEY,   // PEM private key content
+      ca: process.env.EFI_CA_CERT, // CA certificate content
       rejectUnauthorized: true
     });
 
@@ -176,13 +151,7 @@ async function createPixTransaction(token, { establishment_id, changeAmount, pix
 
     const postData = JSON.stringify(transactionData);
 
-    // Adicionado: Chamadas de debug antes de criar o agente mTLS
-    console.log('\n--- Verificando certificados para o PIX ---');
-    peek('EFI_CERT', process.env.EFI_CERT);
-    peek('EFI_KEY', process.env.EFI_KEY);
-    peek('EFI_CA_CERT', process.env.EFI_CA_CERT);
-    console.log('-------------------------------------------\n');
-
+    // Create mTLS agent with certificates
     const agent = new https.Agent({
       cert: process.env.EFI_CERT,
       key: process.env.EFI_KEY,
@@ -234,4 +203,4 @@ async function createPixTransaction(token, { establishment_id, changeAmount, pix
     req.write(postData);
     req.end();
   });
-}//
+}
